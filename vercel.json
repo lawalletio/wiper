@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/card/scan/:cid", "destination": "/api/card/scan/:cid" }
+  ]
+}
