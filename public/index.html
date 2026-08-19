@@ -253,8 +253,9 @@
     }
 
     function showPayload(data) {
-      lastJson = JSON.stringify(data, null, 2)
-      const uid = data.payload?.uid || ''
+      const payload = data.payload || data
+      lastJson = JSON.stringify(payload, null, 2)
+      const uid = payload.uid || ''
       $('uidOut').textContent = uid ? prettyUid(uid) : ''
       $('json').textContent = lastJson
       result.classList.add('show')
