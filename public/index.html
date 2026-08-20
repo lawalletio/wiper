@@ -104,6 +104,21 @@
       color: #06210f;
     }
     .primary:disabled { opacity: .45; cursor: default; }
+    a.primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      margin-bottom: 10px;
+    }
+    .download {
+      display: block;
+      text-align: center;
+      margin: 8px 0 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .download a { color: var(--green); }
     .ghost {
       width: 100%;
       height: 44px;
@@ -211,8 +226,10 @@
     <section id="result" class="result">
       <p id="uidOut" class="uid"></p>
       <pre id="json"></pre>
+      <a id="boltReset" class="primary" href="#">Reset with Bolt NFC</a>
+      <a class="download" href="https://github.com/boltcard/bolt-nfc-android-app/releases/tag/v0.3.0" target="_blank" rel="noopener">Download Bolt NFC app</a>
       <div class="row">
-        <button id="copy" class="primary" type="button">Copy JSON</button>
+        <button id="copy" class="ghost" type="button">Copy JSON</button>
         <button id="again" class="ghost" type="button">Scan another</button>
       </div>
     </section>
@@ -252,15 +269,17 @@
       return data
     }
 
-    function showPayload(data) {
+    function showPayload(data, cid) {
       const payload = data.payload || data
       lastJson = JSON.stringify(payload, null, 2)
-      const uid = payload.uid || ''
+      const uid = payload.uid || cid || ''
       $('uidOut').textContent = uid ? prettyUid(uid) : ''
       $('json').textContent = lastJson
+      const programUrl = `${location.origin}/card/scan/${encodeURIComponent(uid.toLowerCase())}`
+      $('boltReset').href = `boltcard://reset?url=${encodeURIComponent(programUrl)}`
       result.classList.add('show')
       stage.className = 'stage idle'
-      setStatus('Wipe payload ready. Copy it into your programmer.')
+      setStatus('Wipe payload ready. Reset in Bolt NFC, or copy the JSON.')
       scanBtn.textContent = 'Scan another'
     }
 
@@ -270,7 +289,7 @@
       setStatus('Looking up card…')
       try {
         if (!cid) throw new Error('No chip UID')
-        showPayload(await fetchWipe(cid))
+        showPayload(await fetchWipe(cid), cid)
       } catch (err) {
         stage.className = 'stage error'
         setStatus(err.message || 'Lookup failed', true)
