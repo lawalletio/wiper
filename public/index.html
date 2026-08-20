@@ -258,6 +258,19 @@
       return /^[0-9a-f]{8}$|^[0-9a-f]{14}$/.test(hex) ? hex : null
     }
 
+    function hasDefinedNdef(message) {
+      const records = message?.records || []
+      return records.some((record) => record.recordType && record.recordType !== 'empty')
+    }
+
+    function showBlankCard() {
+      result.classList.remove('show')
+      lastJson = ''
+      stage.className = 'stage idle'
+      setStatus('This card is blank. No NDEF is defined.')
+      scanBtn.textContent = 'Tap to scan'
+    }
+
     function prettyUid(hex) {
       return hex.toUpperCase().match(/.{2}/g).join(':')
     }
@@ -270,9 +283,8 @@
     }
 
     function showPayload(data, cid) {
-      const payload = data.payload || data
-      lastJson = JSON.stringify(payload, null, 2)
-      const uid = payload.uid || cid || ''
+      lastJson = JSON.stringify(data, null, 2)
+      const uid = data.uid || cid || ''
       $('uidOut').textContent = uid ? prettyUid(uid) : ''
       $('json').textContent = lastJson
       const programUrl = `${location.origin}/card/scan/${encodeURIComponent(uid.toLowerCase())}`
@@ -312,10 +324,17 @@
       scanBtn.textContent = 'Waiting for card'
       try {
         const reader = new NDEFReader()
-        reader.addEventListener('reading', (event) => {
-          const cid = hexUid(event.serialNumber)
+        reader.addEventListener('readingerror', () => {
           abort?.abort()
-          resolveCard(cid)
+          showBlankCard()
+        })
+        reader.addEventListener('reading', (event) => {
+          abort?.abort()
+          if (!hasDefinedNdef(event.message)) {
+            showBlankCard()
+            return
+          }
+          resolveCard(hexUid(event.serialNumber))
         })
         await reader.scan({ signal: abort.signal })
       } catch (err) {
