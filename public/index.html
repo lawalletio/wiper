@@ -185,6 +185,75 @@
       text-align: center;
     }
     .err { color: var(--danger); }
+    .help-link {
+      display: block;
+      margin: 14px auto 0;
+      background: none;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 650;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .modal {
+      width: min(420px, calc(100vw - 32px));
+      max-height: min(88dvh, 720px);
+      margin: auto;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--card);
+      color: var(--ink);
+      box-shadow: 0 24px 80px #0009;
+    }
+    .modal::backdrop { background: #031009cc; }
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 20px 0;
+    }
+    .modal h2 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+    }
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      flex-shrink: 0;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .modal-body {
+      padding: 8px 20px 8px;
+      overflow: auto;
+    }
+    .modal h3 {
+      margin: 16px 0 8px;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+    .modal ul, .modal ol {
+      margin: 0;
+      padding-left: 1.2em;
+      color: var(--muted);
+    }
+    .modal li { margin: 7px 0; }
+    .modal li b, .modal code {
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+    }
+    .modal a { color: var(--green); }
+    .modal-foot { padding: 12px 20px 20px; }
     @keyframes pulse {
       0% { transform: scale(.86); opacity: .7; }
       100% { transform: scale(1.08); opacity: 0; }
@@ -197,6 +266,7 @@
       <div class="brand">LaWallet</div>
       <h1>Card Wiper</h1>
       <p class="lede">Tap an NTAG424 to reveal its wipe payload.</p>
+      <button id="helpOpen" class="help-link" type="button">Cómo funciona</button>
     </header>
 
     <div id="stage" class="stage idle" aria-hidden="true">
@@ -236,6 +306,34 @@
 
     <p class="hint">Web NFC works in Chrome on Android over HTTPS or localhost. iPhone: enter the UID, or open this page from the card’s tap URL.</p>
   </main>
+
+  <dialog id="help" class="modal">
+    <div class="modal-head">
+      <h2>Cómo funciona</h2>
+      <button id="helpClose" class="modal-close" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <div class="modal-body">
+      <h3>Qué se necesita</h3>
+      <ul>
+        <li>Un dispositivo con NFC Android</li>
+        <li>Conexión a Internet</li>
+        <li>La app Bolt NFC Android<br>
+          <a href="https://github.com/boltcard/bolt-nfc-android-app/releases/tag/v0.3.0" target="_blank" rel="noopener">Descargar v0.3.0</a>
+        </li>
+      </ul>
+      <h3>Instrucciones</h3>
+      <ol>
+        <li>Botón: <b>Tap to scan</b></li>
+        <li>Tapear la tarjeta</li>
+        <li>Botón <b>Reset with Bolt NFC</b></li>
+        <li>Redirige a la app, tab <b>Reset Bolt Card</b></li>
+        <li>Dejamos la tarjeta apoyada hasta que termina el proceso</li>
+      </ol>
+    </div>
+    <div class="modal-foot">
+      <button id="helpDone" class="primary" type="button">Entendido</button>
+    </div>
+  </dialog>
   <script>
     const $ = (id) => document.getElementById(id)
     const stage = $('stage')
@@ -246,7 +344,23 @@
     let busy = false
     let lastJson = ''
 
+    const help = $('help')
     const nfcOk = 'NDEFReader' in window
+
+    function openHelp() {
+      if (typeof help.showModal === 'function') help.showModal()
+      else help.setAttribute('open', '')
+    }
+    function closeHelp() {
+      if (help.open) help.close()
+    }
+    $('helpOpen').addEventListener('click', openHelp)
+    $('helpClose').addEventListener('click', closeHelp)
+    $('helpDone').addEventListener('click', closeHelp)
+    help.addEventListener('click', (e) => {
+      if (e.target === help) closeHelp()
+    })
+    openHelp()
 
     function setStatus(html, isError = false) {
       statusEl.className = 'status' + (isError ? ' err' : '')
